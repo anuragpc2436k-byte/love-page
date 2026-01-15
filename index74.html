@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>For You 🤍</title>
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI', sans-serif;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.container {
+  text-align: center;
+  max-width: 600px;
+  padding: 20px;
+  color: white;
+}
+
+.text {
+  font-size: 24px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 1s ease;
+}
+
+.text.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.instruction {
+  margin-top: 20px;
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.heart {
+  position: absolute;
+  color: rgba(255,255,255,0.8);
+  animation: float 5s linear infinite;
+}
+
+@keyframes float {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-800px); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="text show" id="text">Just tap 🤍</div>
+  <div class="instruction" id="instruction"></div>
+</div>
+
+<script>
+let step = 0;
+let tapCount = 0;
+let lastTap = 0;
+let startX = null;
+let path = [];
+
+const text = document.getElementById("text");
+const instruction = document.getElementById("instruction");
+
+const layers = [
+  { msg: "Just tap 🤍", inst: "" },
+  { msg: "Just tap again…", inst: "" },
+  { msg: "I know things haven’t been easy between us.", inst: "Slide left ⬅️" },
+  { msg: "But my heart still chooses you.", inst: "Slide right ➡️" },
+  { msg: "I miss us… more than words can say.", inst: "Draw a heart ❤️" },
+  { msg: "If there’s still space for me…<br>can we start again? 🤍", inst: "" }
+];
+
+function showLayer(i) {
+  text.classList.remove("show");
+  setTimeout(() => {
+    text.innerHTML = layers[i].msg;
+    instruction.innerHTML = layers[i].inst;
+    text.classList.add("show");
+  }, 400);
+}
+
+document.addEventListener("click", () => {
+  const now = Date.now();
+  if (now - lastTap < 300) {
+    if (step === 4) next();
+  } else {
+    tapCount++;
+    if (step <= 1 && tapCount === step + 1) next();
+  }
+  lastTap = now;
+});
+
+document.addEventListener("touchstart", e => {
+  startX = e.touches[0].clientX;
+  path = [];
+});
+
+document.addEventListener("touchmove", e => {
+  path.push({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+});
+
+document.addEventListener("touchend", e => {
+  if (!startX) return;
+  const endX = e.changedTouches[0].clientX;
+  const diff = endX - startX;
+
+  if (step === 2 && diff < -80) next();
+  if (step === 3 && diff > 80) next();
+  if (step === 4 && isHeart(path)) next();
+
+  startX = null;
+});
+
+function next() {
+  step++;
+  if (step < layers.length) showLayer(step);
+  if (step === 5) startHearts();
+}
+
+function startHearts() {
+  setInterval(() => {
+    const h = document.createElement("div");
+    h.className = "heart";
+    h.innerHTML = "❤";
+    h.style.left = Math.random() * 100 + "vw";
+    h.style.bottom = "0";
+    h.style.fontSize = Math.random() * 20 + 15 + "px";
+    document.body.appendChild(h);
+    setTimeout(() => h.remove(), 5000);
+  }, 300);
+}
+
+// very simple heart detection
+function isHeart(points) {
+  if (points.length < 20) return false;
+  const mid = Math.floor(points.length / 2);
+  return points[0].y < points[mid].y && points[points.length - 1].y < points[mid].y;
+}
+</script>
+
+</body>
+</html>
